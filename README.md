@@ -33,6 +33,20 @@ Usage: ./maya22-control [options]
   -r <0-127>  - Input right volume
   -L <0-145>  - Output left volume (seems 127 without gain and > with gain)
   -R <0-145>  - Output right volume (seems 127 without gain and > with gain)
+  -v          - Show version
+  -f <file>   - Load configuration from file
+Configuration file example:
+
+```
+input_l=80
+input_r=80
+output_l=120
+output_r=120
+monitor=on
+enable_outputs=1
+disable_outputs=0
+input_channel=0x8
+```
 ```
 
 Udev permissions & autoset defaults

@@ -1,3 +1,7 @@
+#ifndef VERSION
+#define VERSION "dev"
+#endif
+#include <stdio.h>
 #include <wchar.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -74,12 +78,19 @@ int main(int argc, char *argv[])
     unsigned char input_channel = 0x8; // MIC: 0x1, HIZ: 0x2, LINE: 0x4, MIC_HIZ: 0x8, MUTE: 0xc1 (depends on selected channel, (0xc0 || channel))
 
     bool do_e = false, do_enable_outputs = true, do_c = false, do_m = false, do_l = false, do_r = false, do_L = false, do_R = false;
+    char *config_file = NULL;
 
     // Parse arguments
     int opt = 0;
     signed char c;
-    while( (c = getopt(argc, argv, "eidc:Mml:r:L:R:Ih")) != -1 ) {
+    while( (c = getopt(argc, argv, "veidc:Mml:r:L:R:Ihf:")) != -1 ) {
     switch( c ) {
+            case 'v':
+                wprintf(L"maya22-control version: %hs\n", VERSION);
+                exit(0);
+            case 'f':
+                config_file = optarg;
+                break;
             case 'e':
                 do_e = true;
                 break;
@@ -162,6 +173,44 @@ int main(int argc, char *argv[])
 
     if( do_enable_outputs || do_c || do_m || do_l || do_r || do_L || do_R || do_disable_outputs ) {
         hiddev = hid_open(VENDOR_ID, PRODUCT_ID, NULL);
+        if( config_file ) {
+            FILE *f = fopen(config_file, "r");
+            if (!f) {
+                wprintf(L"ERROR: Could not open config file: %hs\n", config_file);
+                hid_exit();
+                return 1;
+            }
+            char line[128];
+            while (fgets(line, sizeof(line), f)) {
+                char key[32], value[32];
+                if (sscanf(line, "%31[^=]=%31s", key, value) == 2) {
+                    if (strcmp(key, "input_l") == 0) {
+                        input_l = atoi(value);
+                        do_l = true;
+                    } else if (strcmp(key, "input_r") == 0) {
+                        input_r = atoi(value);
+                        do_r = true;
+                    } else if (strcmp(key, "output_l") == 0) {
+                        output_l = atoi(value);
+                        do_L = true;
+                    } else if (strcmp(key, "output_r") == 0) {
+                        output_r = atoi(value);
+                        do_R = true;
+                    } else if (strcmp(key, "monitor") == 0) {
+                        monitor = (strcmp(value, "on") == 0 || strcmp(value, "1") == 0);
+                        do_m = true;
+                    } else if (strcmp(key, "enable_outputs") == 0) {
+                        do_enable_outputs = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
+                    } else if (strcmp(key, "disable_outputs") == 0) {
+                        do_disable_outputs = (strcmp(value, "1") == 0 || strcmp(value, "true") == 0);
+                    } else if (strcmp(key, "input_channel") == 0) {
+                        input_channel = (unsigned char)strtol(value, NULL, 0);
+                        do_c = true;
+                    }
+                }
+            }
+            fclose(f);
+        }
         if( hiddev != NULL ) {
             if( do_enable_outputs ) {
                 wprintf(L"  Enable all outputs\n");
@@ -196,8 +245,9 @@ int main(int argc, char *argv[])
                 send(hiddev, 0x09, output_r + 110); // 110 - min value
             }
             hid_close(hiddev);
-        } else
-            wprintf(L"Unable to open hid device\n");
+        } else {
+            wprintf(L"ERROR: Unable to open hid device\n");
+        }
     }
 
     hid_exit();
