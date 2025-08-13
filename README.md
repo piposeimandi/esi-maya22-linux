@@ -23,8 +23,8 @@ $ maya22-control -h
 Usage: ./maya22-control [options]
 
   -e          - Enumerate available devices
-  -i          - Enable headphone
-  -I          - Disable headphone
+  -i          - Enable all outputs
+  -I          - Disable all outputs
   -d          - Set default values
   -c <name>   - Set input channel ('mic', 'hiz', 'line', 'mic_hiz', 'mute')
   -M          - Input monitoring on

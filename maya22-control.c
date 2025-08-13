@@ -16,7 +16,7 @@
        __typeof__ (b) _b = (b); \
          _a < _b ? _a : _b; })
 
-bool do_disable_headphone = false; //  New variable to disable headphone
+bool do_disable_outputs = false; // Variable para deshabilitar todas las salidas
 
 
 void enumerate_hid()
@@ -73,24 +73,24 @@ int main(int argc, char *argv[])
     bool monitor = false, input_mute = false;
     unsigned char input_channel = 0x8; // MIC: 0x1, HIZ: 0x2, LINE: 0x4, MIC_HIZ: 0x8, MUTE: 0xc1 (depends on selected channel, (0xc0 || channel))
 
-    bool do_e = false, do_i = false, do_c = false, do_m = false, do_l = false, do_r = false, do_L = false, do_R = false;
+    bool do_e = false, do_enable_outputs = true, do_c = false, do_m = false, do_l = false, do_r = false, do_L = false, do_R = false;
 
     // Parse arguments
     int opt = 0;
     signed char c;
     while( (c = getopt(argc, argv, "eidc:Mml:r:L:R:Ih")) != -1 ) {
-        switch( c ) {
+    switch( c ) {
             case 'e':
                 do_e = true;
                 break;
             case 'i':
-                do_i = true;
+                do_enable_outputs = true;
                 break;
-            case 'I':  // New variable to disable headphone
-                do_disable_headphone = true;
+            case 'I':  // Variable para deshabilitar todas las salidas
+                do_disable_outputs = true;
                 break;
             case 'd':
-                do_i = true; do_c = true; do_m = true; do_l = true; do_r = true; do_L = true; do_R = true;
+                do_enable_outputs = true; do_c = true; do_m = true; do_l = true; do_r = true; do_L = true; do_R = true;
                 break;
             case 'c':
                 do_c = true;
@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
             default:
                 wprintf(L"Usage: %s [options]\n\n", argv[0]);
                 wprintf(L"  -e          - Enumerate available devices\n");
-                wprintf(L"  -i          - Enable headphone\n");
-                wprintf(L"  -I          - Disable headphone\n");
+                wprintf(L"  -i          - Enable all outputs\n");
+                wprintf(L"  -I          - Disable all outputs\n");
                 wprintf(L"  -d          - Set default values\n");
                 wprintf(L"  -c <name>   - Set input channel ('mic', 'hiz', 'line', 'mic_hiz', 'mute')\n");
                 wprintf(L"  -M          - Input monitoring on\n");
@@ -160,15 +160,15 @@ int main(int argc, char *argv[])
     if( do_e )
         enumerate_hid();
 
-    if( do_i || do_c || do_m || do_l || do_r || do_L || do_R || do_disable_headphone ) {
+    if( do_enable_outputs || do_c || do_m || do_l || do_r || do_L || do_R || do_disable_outputs ) {
         hiddev = hid_open(VENDOR_ID, PRODUCT_ID, NULL);
         if( hiddev != NULL ) {
-            if( do_i ) {
-                wprintf(L"  Enable headphone\n");
+            if( do_enable_outputs ) {
+                wprintf(L"  Enable all outputs\n");
                 send(hiddev, 0x1a, 0x00);
             }
-            if( do_disable_headphone ) {
-                wprintf(L"  Disable headphone\n");
+            if( do_disable_outputs ) {
+                wprintf(L"  Disable all outputs\n");
                 send(hiddev, 0x1a, 0x01);  // Command Add 
             }
             if( do_c ) {
