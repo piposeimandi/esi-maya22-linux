@@ -1,3 +1,4 @@
+#include <ctype.h>
 #ifndef VERSION
 #define VERSION "dev"
 #endif
@@ -77,14 +78,20 @@ int main(int argc, char *argv[])
     bool monitor = false, input_mute = false;
     unsigned char input_channel = 0x8; // MIC: 0x1, HIZ: 0x2, LINE: 0x4, MIC_HIZ: 0x8, MUTE: 0xc1 (depends on selected channel, (0xc0 || channel))
 
-    bool do_e = false, do_enable_outputs = true, do_c = false, do_m = false, do_l = false, do_r = false, do_L = false, do_R = false;
+    bool do_e = false, do_enable_outputs = true, do_c = false, do_m = false, do_l = false, do_r = false, do_L = false, do_R = false, do_query = false;
+    // Lista de comandos a probar automáticamente con -q
+    unsigned char query_cmds[] = {0x00, 0x1a, 0x2a, 0x2c, 0x1c, 0x1e, 0x07, 0x09};
+    int num_query_cmds = sizeof(query_cmds)/sizeof(query_cmds[0]);
     char *config_file = NULL;
 
     // Parse arguments
     int opt = 0;
     signed char c;
-    while( (c = getopt(argc, argv, "veidc:Mml:r:L:R:Ihf:")) != -1 ) {
-    switch( c ) {
+    while( (c = getopt(argc, argv, "qveidc:Mml:r:L:R:Ihf:")) != -1 ) {
+        switch( c ) {
+            case 'q':
+                do_query = true;
+                break;
             case 'v':
                 wprintf(L"maya22-control version: %hs\n", VERSION);
                 exit(0);
@@ -160,6 +167,7 @@ int main(int argc, char *argv[])
                 wprintf(L"  -R <0-145>  - Output right volume\n");
                 wprintf(L"  -v          - Show version\n");
                 wprintf(L"  -f <file>   - Load configuration from file\n");
+                wprintf(L"  -q          - Query device state with several commands (shows raw buffer)\n");
                 exit(0);
         }
     }
@@ -173,7 +181,7 @@ int main(int argc, char *argv[])
     if( do_e )
         enumerate_hid();
 
-    if( do_enable_outputs || do_c || do_m || do_l || do_r || do_L || do_R || do_disable_outputs ) {
+    if( do_enable_outputs || do_c || do_m || do_l || do_r || do_L || do_R || do_disable_outputs || do_query ) {
         hiddev = hid_open(VENDOR_ID, PRODUCT_ID, NULL);
         if( config_file ) {
             FILE *f = fopen(config_file, "r");
@@ -214,6 +222,35 @@ int main(int argc, char *argv[])
             fclose(f);
         }
         if( hiddev != NULL ) {
+            if( do_query ) {
+                wprintf(L"  Querying device state with multiple commands...\n");
+                for(int q=0; q<num_query_cmds; ++q) {
+                    unsigned char cmd = query_cmds[q];
+                    wprintf(L"    CMD 0x%02X:\n", cmd);
+                    unsigned char buf[33];
+                    memset(buf, 0, sizeof(buf));
+                    buf[1] = 0x12;
+                    buf[2] = 0x34;
+                    buf[3] = cmd;
+                    buf[5] = 1;
+                    buf[22] = 0x80;
+                    int res = hid_write(hiddev, buf, sizeof(buf));
+                    if (res < 0) {
+                        wprintf(L"      ERROR: Query write failed: %d\n", res);
+                        continue;
+                    }
+                    res = hid_read(hiddev, buf, sizeof(buf));
+                    if (res < 0) {
+                        wprintf(L"      ERROR: Query read failed: %d\n", res);
+                        continue;
+                    }
+                    wprintf(L"      Device response (%d bytes): ", res);
+                    for (int i = 0; i < res; ++i) {
+                        wprintf(L"%02X ", buf[i]);
+                    }
+                    wprintf(L"\n");
+                }
+            }
             if( do_enable_outputs ) {
                 wprintf(L"  Enable all outputs\n");
                 send(hiddev, 0x1a, 0x00);

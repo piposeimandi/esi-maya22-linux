@@ -35,6 +35,15 @@ Usage: ./maya22-control [options]
   -R <0-145>  - Output right volume (seems 127 without gain and > with gain)
   -v          - Show version
   -f <file>   - Load configuration from file
+  -q          - Query device state (shows raw buffer)
+Query example:
+
+```
+$ maya22-control -q
+  Querying device state...
+  Device response (18 bytes): 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  Enable all outputs
+```
 Configuration file example:
 
 ```
