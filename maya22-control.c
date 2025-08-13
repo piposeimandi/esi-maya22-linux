@@ -158,6 +158,8 @@ int main(int argc, char *argv[])
                 wprintf(L"  -r <0-127>  - Input right volume\n");
                 wprintf(L"  -L <0-145>  - Output left volume\n");
                 wprintf(L"  -R <0-145>  - Output right volume\n");
+                wprintf(L"  -v          - Show version\n");
+                wprintf(L"  -f <file>   - Load configuration from file\n");
                 exit(0);
         }
     }
