@@ -1,7 +1,9 @@
 #include <wchar.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <hidapi/hidapi.h>
 
 #define VENDOR_ID  0x2573
@@ -70,14 +72,14 @@ int main(int argc, char *argv[])
 {
     // Options values
     long input_l = 86, input_r = 86, output_l = 145, output_r = 145;
-    bool monitor = false, input_mute = false;
+    bool monitor = false;
     unsigned char input_channel = 0x8; // MIC: 0x1, HIZ: 0x2, LINE: 0x4, MIC_HIZ: 0x8, MUTE: 0xc1 (depends on selected channel, (0xc0 || channel))
 
-    bool do_e = false, do_enable_outputs = true, do_c = false, do_m = false, do_l = false, do_r = false, do_L = false, do_R = false;
+    bool do_e = false, do_enable_outputs = false, do_c = false, do_m = false, do_l = false, do_r = false, do_L = false, do_R = false;
 
     // Parse arguments
     int opt = 0;
-    signed char c;
+    int c;
     while( (c = getopt(argc, argv, "eidc:Mml:r:L:R:Ih")) != -1 ) {
     switch( c ) {
             case 'e':

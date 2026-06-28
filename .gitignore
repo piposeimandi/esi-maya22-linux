@@ -1,1 +1,10 @@
 maya22-control
+*.o
+*.obj
+*.out
+*.exe
+*.swp
+*.swo
+*~
+__pycache__/
+*.pyc
